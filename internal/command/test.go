@@ -82,6 +82,15 @@ Options:
 
   -verbose              Print the plan or state for each test run block as it
                         executes.
+
+  -var 'foo=bar'        Set a value for one of the input variables in the root
+                        module of the configuration. Use this option more than
+                        once to set more than one variable.
+
+  -var-file=filename    Load variable values from the given file, in addition
+                        to the default files terraform.tfvars and *.auto.tfvars.
+                        Use this option more than once to include more than one
+                        variables file.
 `
 	return strings.TrimSpace(helpText)
 }
@@ -104,6 +113,24 @@ func (c *TestCommand) Run(rawArgs []string) int {
 	}
 
 	view := views.NewTest(args.ViewType, c.View)
+
+	// Users can also specify variables via the command line, so we'll parse
+	// all that here.
+	var items []rawFlag
+	for _, variable := range args.Vars.All() {
+		items = append(items, rawFlag{
+			Name:  variable.Name,
+			Value: variable.Value,
+		})
+	}
+	c.variableArgs = rawFlags{items: &items}
+
+	variables, variableDiags := c.collectVariableValues()
+	diags = diags.Append(variableDiags)
+	if variableDiags.HasErrors() {
+		view.Diagnostics(nil, nil, diags)
+		return 1
+	}
 
 	config, configDiags := c.loadConfigWithTests(".", args.TestDirectory)
 	diags = diags.Append(configDiags)
@@ -184,24 +211,6 @@ func (c *TestCommand) Run(rawArgs []string) int {
 
 	diags = diags.Append(fileDiags)
 	if fileDiags.HasErrors() {
-		view.Diagnostics(nil, nil, diags)
-		return 1
-	}
-
-	// Users can also specify variables via the command line, so we'll parse
-	// all that here.
-	var items []rawFlag
-	for _, variable := range args.Vars.All() {
-		items = append(items, rawFlag{
-			Name:  variable.Name,
-			Value: variable.Value,
-		})
-	}
-	c.variableArgs = rawFlags{items: &items}
-
-	variables, variableDiags := c.collectVariableValues()
-	diags = diags.Append(variableDiags)
-	if variableDiags.HasErrors() {
 		view.Diagnostics(nil, nil, diags)
 		return 1
 	}

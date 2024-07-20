@@ -7,6 +7,7 @@ package refactoring
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -517,7 +518,8 @@ A chain of move statements must end with an address that doesn't appear in any o
 				if !gotDiags.HasErrors() {
 					t.Fatalf("unexpected success\nwant error: %s", test.WantError)
 				}
-				if got, want := gotDiags.Err().Error(), test.WantError; got != want {
+				normalisedErr := filepath.ToSlash(gotDiags.Err().Error())
+				if got, want := normalisedErr, test.WantError; got != want {
 					t.Fatalf("wrong error\ngot error:  %s\nwant error: %s", got, want)
 				}
 			default:
@@ -540,7 +542,7 @@ func loadRefactoringFixture(t *testing.T, dir string) (*configs.Config, instance
 	defer cleanup()
 
 	inst := initwd.NewModuleInstaller(loader.ModulesDir(), loader, registry.NewClient(nil, nil))
-	_, instDiags := inst.InstallModules(context.Background(), dir, "tests", true, false, initwd.ModuleInstallHooksImpl{})
+	_, instDiags := inst.InstallModules(context.Background(), dir, "tests", true, false, initwd.ModuleInstallHooksImpl{}, configs.RootModuleCallForTesting())
 	if instDiags.HasErrors() {
 		t.Fatal(instDiags.Err())
 	}
@@ -551,7 +553,7 @@ func loadRefactoringFixture(t *testing.T, dir string) (*configs.Config, instance
 		t.Fatalf("failed to refresh modules after installation: %s", err)
 	}
 
-	rootCfg, diags := loader.LoadConfig(dir)
+	rootCfg, diags := loader.LoadConfig(dir, configs.RootModuleCallForTesting())
 	if diags.HasErrors() {
 		t.Fatalf("failed to load root module: %s", diags.Error())
 	}

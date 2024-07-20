@@ -9,10 +9,12 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-test/deep"
+	"github.com/opentofu/opentofu/internal/configs"
 )
 
 func TestLoadConfigWithSnapshot(t *testing.T) {
@@ -24,7 +26,7 @@ func TestLoadConfigWithSnapshot(t *testing.T) {
 		t.Fatalf("unexpected error from NewLoader: %s", err)
 	}
 
-	_, got, diags := loader.LoadConfigWithSnapshot(fixtureDir)
+	_, got, diags := loader.LoadConfigWithSnapshot(fixtureDir, configs.RootModuleCallForTesting())
 	assertNoDiagnostics(t, diags)
 	if got == nil {
 		t.Fatalf("snapshot is nil; want non-nil")
@@ -45,6 +47,9 @@ func TestLoadConfigWithSnapshot(t *testing.T) {
 			"child_b.child_d": "testdata/already-installed/.terraform/modules/child_b.child_d",
 		}
 
+		for key, module := range wantModuleDirs {
+			wantModuleDirs[key] = filepath.Clean(module)
+		}
 		problems := deep.Equal(wantModuleDirs, gotModuleDirs)
 		for _, problem := range problems {
 			t.Errorf(problem)
@@ -56,7 +61,7 @@ func TestLoadConfigWithSnapshot(t *testing.T) {
 
 	gotRoot := got.Modules[""]
 	wantRoot := &SnapshotModule{
-		Dir: "testdata/already-installed",
+		Dir: filepath.Join("testdata", "already-installed"),
 		Files: map[string][]byte{
 			"root.tf": []byte(`
 module "child_a" {
@@ -70,6 +75,10 @@ module "child_b" {
 }
 `),
 		},
+	}
+	// Normalise line endings and file paths for Windows
+	for k, v := range gotRoot.Files {
+		gotRoot.Files[k] = []byte(strings.ReplaceAll(string(v), "\r\n", "\n"))
 	}
 	if !reflect.DeepEqual(gotRoot, wantRoot) {
 		t.Errorf("wrong root module snapshot\ngot: %swant: %s", spew.Sdump(gotRoot), spew.Sdump(wantRoot))
@@ -91,9 +100,9 @@ func TestLoadConfigWithSnapshot_invalidSource(t *testing.T) {
 		t.Fatalf("unexpected error from NewLoader: %s", err)
 	}
 
-	_, _, diags := loader.LoadConfigWithSnapshot(".")
+	_, _, diags := loader.LoadConfigWithSnapshot(".", configs.RootModuleCallForTesting())
 	if !diags.HasErrors() {
-		t.Error("LoadConfigWithSnapshot succeeded; want errors")
+		t.Error("LoadConfigWithSnapshot succeeded; want errors", configs.RootModuleCallForTesting())
 	}
 }
 
@@ -106,7 +115,7 @@ func TestSnapshotRoundtrip(t *testing.T) {
 		t.Fatalf("unexpected error from NewLoader: %s", err)
 	}
 
-	_, snap, diags := loader.LoadConfigWithSnapshot(fixtureDir)
+	_, snap, diags := loader.LoadConfigWithSnapshot(fixtureDir, configs.RootModuleCallForTesting())
 	assertNoDiagnostics(t, diags)
 	if snap == nil {
 		t.Fatalf("snapshot is nil; want non-nil")
@@ -117,7 +126,7 @@ func TestSnapshotRoundtrip(t *testing.T) {
 		t.Fatalf("loader is nil; want non-nil")
 	}
 
-	config, diags := snapLoader.LoadConfig(fixtureDir)
+	config, diags := snapLoader.LoadConfig(fixtureDir, configs.RootModuleCallForTesting())
 	assertNoDiagnostics(t, diags)
 	if config == nil {
 		t.Fatalf("config is nil; want non-nil")
@@ -125,7 +134,7 @@ func TestSnapshotRoundtrip(t *testing.T) {
 	if config.Module == nil {
 		t.Fatalf("config has no root module")
 	}
-	if got, want := config.Module.SourceDir, "testdata/already-installed"; got != want {
+	if got, want := config.Module.SourceDir, filepath.Clean("testdata/already-installed"); got != want {
 		t.Errorf("wrong root module sourcedir %q; want %q", got, want)
 	}
 	if got, want := len(config.Module.ModuleCalls), 2; got != want {
@@ -138,7 +147,7 @@ func TestSnapshotRoundtrip(t *testing.T) {
 	if childA.Module == nil {
 		t.Fatalf("child_a config has no module")
 	}
-	if got, want := childA.Module.SourceDir, "testdata/already-installed/.terraform/modules/child_a"; got != want {
+	if got, want := childA.Module.SourceDir, filepath.Clean("testdata/already-installed/.terraform/modules/child_a"); got != want {
 		t.Errorf("wrong child_a sourcedir %q; want %q", got, want)
 	}
 	if got, want := len(childA.Module.ModuleCalls), 1; got != want {

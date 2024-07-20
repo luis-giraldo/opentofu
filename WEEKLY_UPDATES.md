@@ -1,5 +1,49 @@
 # Weekly Updates
 
+## 2024-07-18
+
+Hey folks, sorry for the sporadic updates, we'll try to make these more frequent. Here's what happened since the last update:
+
+- [OpenTofu 1.8.0-beta2](https://opentofu.org/blog/opentofu-1-8-0-beta1/) is now here with a lot of long-requested functionality, such as early evaluation for variables and locals, as well as support for `.tofu` files with an override functionality. We are currently working towards a 1.8.0 release candidate.
+- [OpenTofu 1.7.3](https://github.com/opentofu/opentofu/releases/tag/v1.7.3) and [1.6.3](https://github.com/opentofu/opentofu/releases/tag/v1.6.3) are also available with some bugfixes.
+- Recent developments:
+  - We are currently planning the 1.9.0 release to add on top of the 1.8.0 early evaluation features. The new improvements include passing providers to modules in loops.
+  - We are working with the community and vendors to provide better OpenTofu support in Visual Studio Code and other IDEs.
+  - We are working on a user interface for the registry. This includes creating a general-purpose library for working with the registry data in Go. If you would like to build on top of the registry data set, stay tuned for more news on this.
+  - [tofudl](https://github.com/opentofu/tofudl) is a new standalone Go library that makes it easier to download and run OpenTofu from Go programs securely. If yo uare a tool vendor, check it out.
+  - Last but not least, for the 1.9.0 we are aiming to bring some much-needed improvements in terms of testing the OpenTofu codebase and merging performance improvements.
+- How can I help?
+  - Please test the 1.8.0 preview releases. Early community feedback on the functionality and potential edge cases we may have missed is critical for releases.
+  - If you are experienced in TypeScript/React, please stay tuned as we may be putting out `help-wanted` issues on GitHub and Slack related to the registry UI.
+  - If you are a tool author, please keep an eye out of the libraries we release on GitHub and Slack. We would like to make OpenTofu more modular and your early feedback on these libraries helps us make them better. If you have feedback, please use the GitHub review functionality to provide it.
+
+## 2024-06-14
+
+Hello! It's been a busy month since the last "Weekly Update" and there is a lot to cover!
+
+- [OpenTofu 1.7.2](https://github.com/opentofu/opentofu/releases/tag/v1.7.2) was released!
+  - This release contained a few bugfixes for new functionality introduced in the 1.7 release cycle
+- Recent Developments:
+  - A new [RFC Process](https://github.com/opentofu/opentofu/blob/main/rfc/20240524-OpenTofu-RFC-Process.md) has been adopted!
+    - This will help define larger proposals and enable more in-depth converations.
+    - Existing accepted RFCs have been backfilled to preserve history.
+  - Static Evaluation work has begun!
+    - [RFC was accepted!](https://github.com/opentofu/opentofu/pull/1649)
+    - The [first PR](https://github.com/opentofu/opentofu/pull/1718) has been opened to implement the RFC
+  - Performance improvements:
+    - [Write state using compact JSON representation](https://github.com/opentofu/opentofu/pull/1647)
+    - [Make persist interval for remote state backend configurable](https://github.com/opentofu/opentofu/pull/1591)
+  - [Support for overrides](https://github.com/opentofu/opentofu/pull/1499) in `tofu test`
+  - [Allow variable to pass inside `variables` block](https://github.com/opentofu/opentofu/pull/1488)
+- Upcoming 1.8.0-alpha1, as early as next week!
+  - Enables use of variables in backends and module sources!
+  - New [.tofu file extension](https://github.com/opentofu/opentofu/pull/1699/files)!
+  - Introduce `tofu {}` block as alternative to `terraform {}` and [change understanding of required_version](https://github.com/opentofu/opentofu/pull/1716)
+  - Full list in the [CHANGELOG](https://github.com/opentofu/opentofu/blob/568ff66/CHANGELOG.md)
+- How can I help?
+  - Use OpenTofu, report issues, and please upvote the ones that are important to you! You can see an overall ranking in the [ranking issue](https://github.com/opentofu/opentofu/issues/1496).
+  - We occasionally mark issues with the `help-wanted` label, so keep an eye out for them!
+
 ## 2024-05-17
 
 Hello there! After the 1.7.1 release last week, the core team has been focusing on a few remaining issues for 1.7.2 and starting to look forward to 1.8!
